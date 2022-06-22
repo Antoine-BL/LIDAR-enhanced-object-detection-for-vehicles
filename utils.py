@@ -46,8 +46,8 @@ def extract_and_serialize_frame(data):
     clazz = np.array([label.type for label in labels])
     center_x = np.array([label.box.center_x for label in labels])
     center_y = np.array([label.box.center_y for label in labels])
-    height = np.array([label.box.length for label in labels])
-    width = np.array([label.box.width for label in labels])
+    height = np.array([label.box.width for label in labels])
+    width = np.array([label.box.length for label in labels])
 
     feature = {
         'width': _int64_feature(image_shape[0]),
