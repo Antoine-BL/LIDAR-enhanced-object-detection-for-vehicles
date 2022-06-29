@@ -7,41 +7,46 @@ from matplotlib import patches
 
 import numpy as np
 
+CAMERA_NAME_FRONT = 1
+
 def show_camera_image(camera_image, camera_labels, layout, cmap=None):
-  """Show a camera image and the given camera labels."""
+    """Show a camera image and the given camera labels."""
 
-  plt.figure(figsize=(25, 20))
-  ax = plt.subplot(*layout)
+    plt.figure(figsize=(25, 20))
+    ax = plt.subplot(*layout)
 
-  for camera_label in camera_labels:
-    # Draw the camera labels.
-    # Iterate over the individual labels.
-    for label in camera_label.labels:
-      # Draw the object bounding box.
-      ax.add_patch(patches.Rectangle(
-        xy=(label.box.center_x - 0.5 * label.box.length,
-            label.box.center_y - 0.5 * label.box.width),
-        width=label.box.length,
-        height=label.box.width,
-        linewidth=1,
-        edgecolor='red',
-        facecolor='none'))
+    for camera_label in camera_labels:
+        # Draw the camera labels.
+        # Iterate over the individual labels.
+        for label in camera_label.labels:
+            # Draw the object bounding box.
+            ax.add_patch(patches.Rectangle(
+            xy=(label.box.center_x - 0.5 * label.box.length,
+                label.box.center_y - 0.5 * label.box.width),
+            width=label.box.length,
+            height=label.box.width,
+            linewidth=1,
+            edgecolor='red',
+            facecolor='none'))
 
-  # Show the camera image.
-  plt.imshow(tf.image.decode_jpeg(camera_image.image), cmap=cmap)
-  plt.title(open_dataset.CameraName.Name.Name(camera_image.name))
-  plt.grid(False)
-  plt.axis('off')
+    # Show the camera image.
+    plt.imshow(tf.image.decode_jpeg(camera_image.image), cmap=cmap)
+    plt.title(open_dataset.CameraName.Name.Name(camera_image.name))
+    plt.grid(False)
+    plt.axis('off')
 
 def extract_frame_features(data):
     frame = open_dataset.Frame()
     frame.ParseFromString(bytearray(data.numpy()))
     image = frame.images[0].image
-    labels = [camera_labels.labels for camera_labels in frame.camera_labels if camera_labels.name == 1][0]
+    labels = [camera_labels.labels for camera_labels in frame.camera_labels if camera_labels.name == CAMERA_NAME_FRONT][0]
     return (image, labels)
 
 def extract_and_serialize_frame(data):
     (image, labels) = extract_frame_features(data)
+    return serialize_frame(image, labels)
+
+def serialize_frame(image, labels):
     image_shape = tf.io.decode_jpeg(image).shape
     clazz = np.array([label.type for label in labels])
     center_x = np.array([label.box.center_x for label in labels])
@@ -50,8 +55,8 @@ def extract_and_serialize_frame(data):
     width = np.array([label.box.length for label in labels])
 
     feature = {
-        'width': _int64_feature(image_shape[0]),
-        'height': _int64_feature(image_shape[1]),
+        'width': _int64_feature(image_shape[1]),
+        'height': _int64_feature(image_shape[0]),
         'depth': _int64_feature(image_shape[2]),
         'raw_image': _bytes_feature(image),
         'class': _int64List_feature(clazz),
@@ -63,16 +68,16 @@ def extract_and_serialize_frame(data):
     return tf.train.Example(features=tf.train.Features(feature=feature)).SerializeToString()
 
 def _int64_feature(value):
-  """Returns an int64_list from a bool / enum / int / uint."""
-  return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+    """Returns an int64_list from a bool / enum / int / uint."""
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 def _int64List_feature(value):
-  """Returns an int64_list from a bool / enum / int / uint."""
-  return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
+    """Returns an int64_list from a bool / enum / int / uint."""
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
 
 def _floatList_feature(value):
-  """Returns an int64_list from a bool / enum / int / uint."""
-  return tf.train.Feature(float_list=tf.train.FloatList(value=value))
+    """Returns an int64_list from a bool / enum / int / uint."""
+    return tf.train.Feature(float_list=tf.train.FloatList(value=value))
 
 def _bytes_feature(value):
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
