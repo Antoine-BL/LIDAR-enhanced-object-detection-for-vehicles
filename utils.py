@@ -138,10 +138,10 @@ SUPPORTED_LABELS = {
 def lidar_crop(frame, image):
     (range_images, camera_projections, _, range_image_top_pose) = frame_utils.parse_range_image_and_camera_projection(frame)
     points, cp_points = frame_utils.convert_range_image_to_point_cloud(
-    frame,
-    range_images,
-    camera_projections,
-    range_image_top_pose)
+        frame,
+        range_images,
+        camera_projections,
+        range_image_top_pose)
     points_ri2, cp_points_ri2 = frame_utils.convert_range_image_to_point_cloud(
         frame,
         range_images,
@@ -217,4 +217,7 @@ def label_in_polygon(label, image, threshold = 0.25):
     cropped = image[top_left_y:bottom_right_y, top_left_x:bottom_right_x]
     nb_pixels = cropped.size
     nonzero = np.count_nonzero(cropped)
-    return (nonzero / nb_pixels) > threshold
+    if (nb_pixels > 0):
+        return (nonzero / nb_pixels) > threshold
+    else:
+        return False
